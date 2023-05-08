@@ -92,11 +92,8 @@ class Video2Images:
             # Checking if output directory exist or not
             # print(self.out_dir)
             if os.path.exists(self.out_dir):
-
                 os.mkdir(self.out_dir + os.path.sep + folder_name)
-
                 self.out_dir = self.out_dir + os.path.sep + folder_name
-
             else:
                 sys.exit("\033[1;31m Output directory doesnot exist! Please check the output path \033[00m")
 
