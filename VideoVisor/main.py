@@ -1,10 +1,17 @@
 from video_parser.video_parser import VideoParser
+import argparse
 
 
 def main():
-    source_video_file = "../examples/input/lada.mp4"
-    VideoParser.parse(source_video_file)
+    parser = argparse.ArgumentParser(description='Compare two video files')
+    parser.add_argument('first_video_file')
+    parser.add_argument('second_video_file')
+    args = parser.parse_args()
+    source_video_1 = args.first_video_file
+    source_video_2 = args.second_video_file
+    VideoParser.parse(source_video_1)
+    VideoParser.parse(source_video_2)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
