@@ -2,3 +2,5 @@ tqdm
 imageio
 imageio-ffmpeg
 moviepy
+opencv-python
+numpy
