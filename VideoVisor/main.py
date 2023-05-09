@@ -9,8 +9,9 @@ def main():
     args = parser.parse_args()
     source_video_1 = args.first_video_file
     source_video_2 = args.second_video_file
-    VideoParser.parse(source_video_1)
-    VideoParser.parse(source_video_2)
+    output_dir = '../output'
+    VideoParser.parse(source_video_1, output_dir)
+    VideoParser.parse(source_video_2, output_dir)
 
 
 if __name__ == '__main__':

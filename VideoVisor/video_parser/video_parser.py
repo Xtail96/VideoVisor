@@ -5,7 +5,7 @@ import os
 
 class VideoParser:
     @staticmethod
-    def parse(video_file_path: str, output_dir: str = '../output'):
+    def parse(video_file_path: str, output_dir: str):
         if not os.path.exists(video_file_path):
             raise Exception(f'Source file not found {video_file_path}')
         filename = os.path.basename(video_file_path)
