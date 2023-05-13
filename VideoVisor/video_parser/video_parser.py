@@ -12,5 +12,4 @@ class VideoParser:
         result_folder = os.path.join(output_dir, filename)
         if os.path.exists(result_folder):
             shutil.rmtree(result_folder)
-
         Video2Images(video_filepath=video_file_path, out_dir=output_dir)
