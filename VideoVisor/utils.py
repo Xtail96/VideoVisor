@@ -1,5 +1,11 @@
 import os
 import shutil
+import os
+
+
+def get_video_frames(source_video_path, output_dir):
+    video_frames_dir = os.path.join(output_dir, os.path.basename(source_video_path))
+    return list(os.path.abspath(os.path.join(video_frames_dir, frame)) for frame in os.listdir(video_frames_dir))
 
 
 def clear_folder(folder: str):
