@@ -19,16 +19,11 @@ def main():
     detector = ObjectDetector()
     VideoParser.parse(source_video_1, output_dir)
     source_video_1_frames = utils.get_video_frames(source_video_1, output_dir)
+    detector.detect_all(source_video_1_frames, ['car', 'truck'])
+
     VideoParser.parse(source_video_2, output_dir)
     source_video_2_frames = utils.get_video_frames(source_video_2, output_dir)
-
-    print(f'Try to detect objects on {os.path.basename(source_video_1)} frames')
-    detector.detect_all(source_video_1_frames)
-    print(f'Objects detection on {os.path.basename(source_video_1)} finished')
-
-    print(f'Try to detect objects on {os.path.basename(source_video_2)} frames')
-    detector.detect_all(source_video_2_frames)
-    print(f'Objects detection on {os.path.basename(source_video_2)} finished')
+    detector.detect_all(source_video_2_frames, ['cat'])
 
 
 if __name__ == '__main__':
