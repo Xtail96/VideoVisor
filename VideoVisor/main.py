@@ -1,5 +1,6 @@
 from video_parser.video_parser import VideoParser
 import argparse
+import os
 
 
 def main():
@@ -9,7 +10,11 @@ def main():
     args = parser.parse_args()
     source_video_1 = args.first_video_file
     source_video_2 = args.second_video_file
-    output_dir = '../output'
+    output_dir = os.path.abspath('../output')
+    if not os.path.exists(output_dir):
+        print(f'Create output directory on {output_dir}')
+        os.mkdir(output_dir)
+
     VideoParser.parse(source_video_1, output_dir)
     VideoParser.parse(source_video_2, output_dir)
 
