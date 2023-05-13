@@ -5,6 +5,23 @@ import numpy as np
 from typing import List
 
 
+class BoundingBox:
+    def __init__(self, x: float, y: float, w: float, h: float):
+        self.x = x
+        self.y = y
+        self.width = w
+        self.height = h
+
+
+class DetectedObject:
+    def __init__(self, label, bbox):
+        self.label = label
+        self.bbox = BoundingBox(*bbox)
+
+    def to_string(self) -> str:
+        return f'(label: {self.label}, x:{self.bbox.x}, y:{self.bbox.y}, w:{self.bbox.width}, h:{self.bbox.height})'
+
+
 class ObjectDetector:
     def __init__(self):
         self.model = cv2.dnn.readNetFromDarknet(self.get_resource_path('yolov4-tiny.cfg'),
@@ -17,7 +34,7 @@ class ObjectDetector:
     def get_resource_path(resource_name: str) -> str:
         return os.path.abspath(os.path.join('object_detector', 'Resources', resource_name))
 
-    def detect(self, img_path: str, target_classes: List[str] = []) -> (List, str):
+    def detect(self, img_path: str, target_classes: List[str] = []) -> (List[DetectedObject], str):
         print(f'Try to detect objects on {img_path}')
         image = cv2.imread(img_path)
         height, width, _ = image.shape
@@ -42,17 +59,19 @@ class ObjectDetector:
                     class_indexes.append(class_index)
                     class_scores.append(float(class_score))
         chosen_boxes = cv2.dnn.NMSBoxes(boxes, class_scores, 0.0, 0.4)
+
+        detected_objects = []
         for box_index in chosen_boxes:
             box_index = box_index
             box = boxes[box_index]
             class_index = class_indexes[box_index]
             if not target_classes or self.classes[class_index] in target_classes:
-                image = self.draw_bounding_box(image, self.classes[class_index], box)
+                class_name = self.classes[class_index]
+                image = self.draw_bounding_box(image, class_name, box)
+                detected_objects.append(DetectedObject(class_name, box))
         cv2.imwrite(img_path, image)
-        print(f'{list(self.classes[class_index] for class_index in class_indexes)} detected')
-        if boxes:
-            print(boxes[0])
-        return boxes, img_path
+        print(f'{list(detected_object.to_string() for detected_object in detected_objects)} detected')
+        return detected_objects, img_path
 
     @staticmethod
     def draw_bounding_box(image, label, box):
@@ -77,5 +96,5 @@ class ObjectDetector:
         text = label
         return cv2.putText(final_image, text, start, font, font_size, color, width, cv2.LINE_AA)
 
-    def detect_all(self, images: List[str], target_classes: List[str] = []) -> List:
+    def detect_all(self, images: List[str], target_classes: List[str] = []) -> List[DetectedObject]:
         return list(self.detect(img, target_classes) for img in images)
