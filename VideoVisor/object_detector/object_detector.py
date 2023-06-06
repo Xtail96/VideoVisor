@@ -55,5 +55,5 @@ class ObjectDetector:
         print(f'{list(detected_object.to_string() for detected_object in detected_objects)} detected')
         return detected_objects, img_path
 
-    def detect_all(self, images: List[str], target_classes: List[str] = []) -> List[utils.DetectedObject]:
+    def detect_all(self, images: List[str], target_classes: List[str]) -> List[utils.DetectedObject]:
         return list(self.detect(img, target_classes) for img in images)
