@@ -1,2 +1,2 @@
 # VideoVisor
-Object based vicdeo comparer
+Object-detection based video comparer
