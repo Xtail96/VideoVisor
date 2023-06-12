@@ -72,15 +72,15 @@ class DetectedObject:
         self.bbox = BoundingBox(*bbox)
 
     def intersects_with(self, other, iou_treshold=0.75):
-        if self.label != other.label:
-            return False
+        #if self.label != other.label:
+        #    return False
         return self.bbox.intersects_with(other.bbox, iou_treshold)
 
     def to_string(self) -> str:
         return f'(label: {self.label}, x:{self.bbox.x}, y:{self.bbox.y}, w:{self.bbox.width}, h:{self.bbox.height})'
 
 
-def get_video_frames(source_video_path, output_dir):
+def get_video_frames(source_video_path, output_dir) -> List[str]:
     video_frames_dir = os.path.join(output_dir, os.path.basename(source_video_path))
     frames = list(os.path.abspath(os.path.join(video_frames_dir, frame)) for frame in os.listdir(video_frames_dir))
     frames.sort(key=len)

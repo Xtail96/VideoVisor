@@ -4,6 +4,7 @@ import os
 import utils
 from object_detector.object_detector import ObjectDetector
 from typing import List
+import noise_generator.noise_genertor as noise_generator
 
 
 def frame_f1(frame1: List[utils.DetectedObject], frame2: List[utils.DetectedObject]):
@@ -32,6 +33,7 @@ def frame_f1(frame1: List[utils.DetectedObject], frame2: List[utils.DetectedObje
     f1 = 2 * precision * recall / max((precision + recall), 1)
     return f1
 
+
 def main():
     parser = argparse.ArgumentParser(description='Compare two video files')
     parser.add_argument('source_video_file')
@@ -41,6 +43,8 @@ def main():
     source_video_1 = args.source_video_file
     source_video_2 = args.decompressed_video_file
     target_classes = args.c.split(',')
+    if target_classes == ['']:
+        target_classes = []
 
     output_dir = os.path.abspath('../output')
     if not os.path.exists(output_dir):
@@ -54,16 +58,21 @@ def main():
 
     VideoParser.parse(source_video_2, output_dir)
     source_video_2_frames = utils.get_video_frames(source_video_2, output_dir)
+
+    # Искусственное наложение шумов
+    for frame in source_video_2_frames:
+        print(f'add nose to frame {frame}')
+        noise_generator.add_noise(frame)
+
     detected_objects_2 = detector.detect_all(source_video_2_frames, target_classes)
     detected_objects_2 = list([x[0] for x in detected_objects_2])
 
     f1_scores = []
     for frame_index in range(min(len(detected_objects_1), len(detected_objects_2))):
         f1 = frame_f1(detected_objects_1[frame_index], detected_objects_2[frame_index])
-        if f1:
+        if f1 is not None:
             f1_scores.append(f1)
-            if f1 > 0:
-                print(f'Local F1={f1}, frame={frame_index}')
+            print(f'Local F1={f1}, frame={frame_index}')
     print(f'Total F1-score: {utils.mean(f1_scores)}')
 
 
