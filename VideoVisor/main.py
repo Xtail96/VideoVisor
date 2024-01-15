@@ -4,7 +4,7 @@ import os
 import utils
 from object_detector.object_detector import ObjectDetector
 from typing import List
-import noise_generator.noise_genertor as noise_generator
+from noise_generator.noise_genertor import NoiseGenerator
 
 
 def frame_f1(frame1: List[utils.DetectedObject], frame2: List[utils.DetectedObject]):
@@ -60,6 +60,7 @@ def main():
     source_video_2_frames = utils.get_video_frames(source_video_2, output_dir)
 
     # Искусственное наложение шумов
+    noise_generator = NoiseGenerator(amount=0.025, var=0.01, mean=0.0, lam=0.01)
     for frame in source_video_2_frames:
         print(f'add nose to frame {frame}')
         noise_generator.add_noise(frame)
