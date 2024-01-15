@@ -3,6 +3,18 @@ import skimage
 import skimage.filters
 import skimage.restoration
 import numpy as np
+from ModulationPy import PSKModem, QAMModem
+
+
+class QPSKModulator:
+    def __init__(self):
+        self.modem = PSKModem(256, np.pi / 4, bin_input=False, soft_decision=False, bin_output=False)
+
+    def modulate(self, msg):
+        return self.modem.modulate(msg)
+
+    def demodulate(self, modulated):
+        return self.modem.demodulate(modulated)
 
 
 class NoiseGenerator:
@@ -11,6 +23,7 @@ class NoiseGenerator:
         self.var = var
         self.mean = mean
         self.lam = lam
+        self.modulator = QPSKModulator()
 
     def add_impulse_noise(self, image):
         # Наложение импульсного шума.
@@ -44,9 +57,13 @@ class NoiseGenerator:
         image_noised_poisson = skimage.img_as_ubyte(image_noised_poisson)
         return image_noised_poisson.copy()
 
-    def add_noise(self, image_path: str):
+    def add_noise(self, image_path: str, use_modulation=False):
         # Наложение всех доступных типов шумов на изображение.
         image = cv2.imread(image_path)
+        if use_modulation:
+            modulated = self.modulator.modulate(image.flatten())
+            image = np.array(self.modulator.demodulate(modulated)).reshape(image.shape)
+
         image = self.add_impulse_noise(image)
         image = self.add_multiplicative_noise(image)
         image = self.add_gaussian_noise(image)

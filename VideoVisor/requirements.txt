@@ -7,3 +7,4 @@ numpy~=1.21.6
 
 scikit-image~=0.19.3
 scipy~=1.7.3
+ModulationPy~=0.1.8
