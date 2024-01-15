@@ -16,6 +16,13 @@ class QPSKModulator:
     def demodulate(self, modulated):
         return self.modem.demodulate(modulated)
 
+    def transmit_image(self, image_path: str):
+        image = cv2.imread(image_path)
+        image_shape = image.shape
+        modulated = self.modulate(image.flatten())
+        image = np.array(self.demodulate(modulated)).reshape(image_shape)
+        cv2.imwrite(image_path, image)
+
 
 class NoiseGenerator:
     def __init__(self, *, amount=0.05, var=0.1, mean=0.0, lam=12.0):
@@ -59,11 +66,10 @@ class NoiseGenerator:
 
     def add_noise(self, image_path: str, use_modulation=False):
         # Наложение всех доступных типов шумов на изображение.
-        image = cv2.imread(image_path)
         if use_modulation:
-            modulated = self.modulator.modulate(image.flatten())
-            image = np.array(self.modulator.demodulate(modulated)).reshape(image.shape)
+            self.modulator.transmit_image(image_path)
 
+        image = cv2.imread(image_path)
         image = self.add_impulse_noise(image)
         image = self.add_multiplicative_noise(image)
         image = self.add_gaussian_noise(image)
