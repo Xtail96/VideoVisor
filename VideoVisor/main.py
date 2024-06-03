@@ -3,6 +3,7 @@ import argparse
 import os
 import utils
 from object_detector.object_detector import ObjectDetector
+from cluster_detector.kmeans_detector import KMeansDetector
 from typing import List
 from noise_generator.noise_genertor import NoiseGenerator, QPSKModulator
 
@@ -50,20 +51,28 @@ def main():
     if not os.path.exists(output_dir):
         print(f'Create output directory on {output_dir}')
         os.mkdir(output_dir)
-    detector = ObjectDetector()
+
     VideoParser.parse(source_video_1, output_dir)
     source_video_1_frames = utils.get_video_frames(source_video_1, output_dir)
+    kmeans_detector = KMeansDetector()
+    kmeans_detector.detect_all(source_video_1_frames, list())
+    return
+
+    detector = ObjectDetector()
     detected_objects_1 = detector.detect_all(source_video_1_frames, target_classes)
     detected_objects_1 = list([x[0] for x in detected_objects_1])
+
+
+
 
     VideoParser.parse(source_video_2, output_dir)
     source_video_2_frames = utils.get_video_frames(source_video_2, output_dir)
 
     # Искусственное наложение шумов на кадры
-    noise_generator = NoiseGenerator(amount=0.025, var=0.01, mean=0.0, lam=0.01)
-    for frame in source_video_2_frames:
-        print(f'add noise to frame {frame}')
-        noise_generator.add_noise(frame, True)
+    #noise_generator = NoiseGenerator(amount=0.025, var=0.01, mean=0.0, lam=0.01)
+    #for frame in source_video_2_frames:
+        #print(f'add noise to frame {frame}')
+        #noise_generator.add_noise(frame, True)
 
     detected_objects_2 = detector.detect_all(source_video_2_frames, target_classes)
     detected_objects_2 = list([x[0] for x in detected_objects_2])
