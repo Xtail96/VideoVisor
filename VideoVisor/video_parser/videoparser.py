@@ -1,6 +1,6 @@
+import os
 import shutil
 from video_parser.video2images import Video2Images
-import os
 
 
 class VideoParser:
