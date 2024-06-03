@@ -70,8 +70,8 @@ class NoiseGenerator:
             self.modulator.transmit_image(image_path)
 
         image = cv2.imread(image_path)
-        image = self.add_impulse_noise(image)
-        image = self.add_multiplicative_noise(image)
+        #image = self.add_impulse_noise(image)
+        #image = self.add_multiplicative_noise(image)
         image = self.add_gaussian_noise(image)
-        image = self.add_quantization_noise(image)
+        #image = self.add_quantization_noise(image)
         cv2.imwrite(image_path, image)
