@@ -55,7 +55,7 @@ def main():
     VideoParser.parse(source_video_1, output_dir)
     source_video_1_frames = utils.get_video_frames(source_video_1, output_dir)
     kmeans_detector = KMeansDetector()
-    kmeans_detector.detect_all(source_video_1_frames, list())
+    kmeans_detector.detect_all(source_video_1_frames)
     return
 
     detector = ObjectDetector()
