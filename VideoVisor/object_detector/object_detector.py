@@ -57,5 +57,5 @@ class ObjectDetector:
         return list(x for x in detected_objects), img_path
 
     def detect_all(self, images: List[str], target_classes: List[str]) -> List[utils.DetectedObject]:
-        return list(self.detect(img, target_classes) for img in images[0:80])
-        #return list(self.detect(img, target_classes) for img in images)
+        #return list(self.detect(img, target_classes) for img in images[0:80])
+        return list(self.detect(img, target_classes) for img in images)

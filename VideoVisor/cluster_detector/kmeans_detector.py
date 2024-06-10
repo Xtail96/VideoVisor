@@ -30,38 +30,6 @@ class KMeansDetector:
         return masked_image.reshape(image.shape)
 
     @staticmethod
-    def get_cluster_coords_(segmented_image, cluster_color_low, cluster_color_upper):
-        # Convert the image to the HSV color space
-        hsv_image = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2HSV)
-        hsv_image = cv2.cvtColor(segmented_image, cv2.COLOR_RGB2HSV)
-
-        # hsv_cluster_color_low = colorsys.rgb_to_hsv(cluster_color_low[0], cluster_color_low[1], cluster_color_low[2])
-        # hsv_cluster_color_upper = colorsys.rgb_to_hsv(cluster_color_upper[0], cluster_color_upper[1], cluster_color_upper[2])
-
-        hsv_cluster_color_low = (0, 100, 50)
-        hsv_cluster_color_upper = (0, 100, 50)
-
-        # Define the lower and upper bounds of the color in HSV
-        lower_color = np.array(hsv_cluster_color_low, dtype=np.uint8)
-        upper_color = np.array(hsv_cluster_color_upper, dtype=np.uint8)
-
-        # Threshold the image to get only the desired color
-        mask = cv2.inRange(hsv_image, lower_color, upper_color)
-
-        # Find the contours of the color regions
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # Iterate through each contour and get the centroid of the region
-        coordinates = []
-        for contour in contours:
-            M = cv2.moments(contour)
-            if M["m00"] > 0:
-                centroid_x = int(M["m10"] / M["m00"])
-                centroid_y = int(M["m01"] / M["m00"])
-                coordinates.append((centroid_x, centroid_y))
-        return coordinates
-
-    @staticmethod
     def get_cluster_coords(segmented_image, r, g, b):
         coords = []
         x, y, z = segmented_image.shape
@@ -102,25 +70,24 @@ class KMeansDetector:
         pixel_values = np.float32(pixel_values)
 
         """Perform k-means clustering on the pixel values."""
-        k = 3
+        k = 5
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
-        compactness, labels, centers = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-        # compactness, labels, centers = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
+        #compactness, labels, centers = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+        compactness, labels, centers = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
         pixel_values, labels, centers = compactness, labels, np.uint8(centers)
 
-        #segmented_image = self.create_segmented_image(source_image, labels, centers)
-        segmented_image = self.create_segmented_image_rgb(source_image, labels)
+        segmented_image = self.create_segmented_image(source_image, labels, centers)
+        #segmented_image = self.create_segmented_image_rgb(source_image, labels)
         cv2.imwrite(f'{img_path}_kmeans.jpg', segmented_image)
 
         frame_number = int(os.path.basename(img_path).split('.')[0])
+        detected_objects = []
+        i = 0
+        for center in centers:
+            coords = self.get_cluster_coords(segmented_image, center[2], center[1], center[0])
+            detected_objects.append(self.create_cluster_bbox(coords, frame_number, f'{i}'))
+            i = i + 1
 
-        coords_1 = self.get_cluster_coords(segmented_image, 128, 0, 0)
-        coords_2 = self.get_cluster_coords(segmented_image, 0, 128, 0)
-        coords_3 = self.get_cluster_coords(segmented_image, 0, 0, 128)
-
-        detected_objects = [self.create_cluster_bbox(coords_1, frame_number, '1'),
-                            self.create_cluster_bbox(coords_2, frame_number, '2'),
-                            self.create_cluster_bbox(coords_3, frame_number, '3')]
         utils.draw_objects_on_image(detected_objects, img_path)
         # print(f'{list(detected_object.to_string() for detected_object in detected_objects)} detected')
         return detected_objects, img_path
