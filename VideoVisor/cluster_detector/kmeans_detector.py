@@ -70,15 +70,16 @@ class KMeansDetector:
         pixel_values = np.float32(pixel_values)
 
         """Perform k-means clustering on the pixel values."""
-        k = 5
+        k = 3
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
         #compactness, labels, centers = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
         compactness, labels, centers = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
         pixel_values, labels, centers = compactness, labels, np.uint8(centers)
 
         segmented_image = self.create_segmented_image(source_image, labels, centers)
-        #segmented_image = self.create_segmented_image_rgb(source_image, labels)
         cv2.imwrite(f'{img_path}_kmeans.jpg', segmented_image)
+        segmented_image_rgb = self.create_segmented_image_rgb(source_image, labels)
+        cv2.imwrite(f'{img_path}_kmeans_rgb.jpg', segmented_image_rgb)
 
         frame_number = int(os.path.basename(img_path).split('.')[0])
         detected_objects = []
