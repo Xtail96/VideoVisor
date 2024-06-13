@@ -113,11 +113,10 @@ def main():
         print(f'Create output directory on {output_dir}')
         os.mkdir(output_dir)
 
-    VideoParser.parse(source_video_1, output_dir)
+    #VideoParser.parse(source_video_1, output_dir)
     source_video_1_frames = utils.get_video_frames(source_video_1, output_dir)
     dbscan_detector = DBSCANDetector()
     detected_objects_1 = dbscan_detector.detect_all(source_video_1_frames)
-    detected_objects_2 = detected_objects_1
     return
 
     #kmeans_detector = KMeansDetector()
@@ -135,6 +134,9 @@ def main():
     for frame in source_video_2_frames:
         print(f'add noise to frame {frame}')
         noise_generator.add_noise(frame, False)
+
+    detected_objects_2 = dbscan_detector.detect_all(source_video_2_frames)
+    return
 
     #detected_objects_2 = kmeans_detector.detect_all(source_video_2_frames)
     #detected_objects_2 = detector.detect_all(source_video_2_frames, target_classes)
