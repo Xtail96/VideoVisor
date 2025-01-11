@@ -31,6 +31,7 @@ class DBSCANDetector:
         image = source_image
         pixel_values = image.reshape((-1, 3))
         pixel_values = np.float32(pixel_values)
+        pixel_values = np.array([x / 1000 for x in pixel_values])
 
         #clustering = DBSCAN(eps=0.3, min_samples=10).fit(pixel_values)
         #clustering = DBSCAN(eps=2, min_samples=100).fit(pixel_values)
@@ -39,7 +40,8 @@ class DBSCANDetector:
         #print(f'clusters min: {min(clustering.labels_)}, max: {max(clustering.labels_)}')
         #colored = self.assign_colors_2_clusters(clustering.labels_)
 
-        labels = DBSCAN(eps=0.5, min_samples=500).fit_predict(pixel_values)
+        #labels = DBSCAN(eps=1.42, min_samples=2500).fit_predict(pixel_values)
+        labels = DBSCAN(eps=0.05, min_samples=2500).fit_predict(pixel_values)
         print(f'clusters min: {min(labels)}, max: {max(labels)}')
         colored = self.assign_colors_2_clusters(labels)
         colored_mask = colored.reshape(height, width, 3)
