@@ -158,10 +158,7 @@ def f1_calculation(frames1, frames2, detector, target_classes=''):
 
     # Detect objects
     detected_objects_1 = detect(detector, frames1, target_classes)
-    print(f'Detected {frame_with_objects_count(detected_objects_1)} objects on first video')
-
     detected_objects_2 = detect(detector, frames2, target_classes)
-    print(f'Detected {frame_with_objects_count(detected_objects_2)} objects on second video')
 
     f1_scores = []
     for frame_index in range(min(len(detected_objects_1), len(detected_objects_2))):
@@ -170,7 +167,10 @@ def f1_calculation(frames1, frames2, detector, target_classes=''):
             f1_scores.append(f1)
             # print(f'Local F1={f1}, frame={frame_index}')
     print('F1 calculation finished')
+    print(f'Detected {frame_with_objects_count(detected_objects_1)} objects on first video')
+    print(f'Detected {frame_with_objects_count(detected_objects_2)} objects on second video')
     return utils.mean(f1_scores)
+
 
 def main():
     parser = argparse.ArgumentParser(description='Compare two video files')
