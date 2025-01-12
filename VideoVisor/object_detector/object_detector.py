@@ -17,8 +17,10 @@ class ObjectDetector:
     def get_resource_path(resource_name: str) -> str:
         return os.path.abspath(os.path.join('object_detector', 'Resources', resource_name))
 
-    def detect(self, img_path: str, target_classes: List[str]) -> (List[utils.DetectedObject], str):
-        print(f'Try to detect objects on {img_path}')
+    def detect(self, img_path: str, target_classes: List[str], silent: bool) -> (List[utils.DetectedObject], str):
+        if not silent:
+            print(f'Try to detect objects on {img_path}')
+
         image = cv2.imread(img_path)
         height, width, _ = image.shape
         blob = cv2.dnn.blobFromImage(image, 1 / 255, (608, 608),
@@ -53,9 +55,10 @@ class ObjectDetector:
                 detected_objects.append(utils.DetectedObject(self.classes[class_index], box, frame_number))
 
         utils.draw_objects_on_image(detected_objects, img_path)
-        print(f'{list(detected_object.to_string() for detected_object in detected_objects)} detected')
+        if not silent:
+            print(f'{list(detected_object.to_string() for detected_object in detected_objects)} detected')
         return list(x for x in detected_objects), img_path
 
-    def detect_all(self, images: List[str], target_classes: List[str]) -> List[utils.DetectedObject]:
+    def detect_all(self, images: List[str], target_classes: List[str], silent: bool) -> List[utils.DetectedObject]:
         #return list(self.detect(img, target_classes) for img in images[0:80])
-        return list(self.detect(img, target_classes) for img in images)
+        return list(self.detect(img, target_classes, silent) for img in images)

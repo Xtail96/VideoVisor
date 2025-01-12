@@ -9,6 +9,7 @@ from typing import List
 from noise_generator.noise_genertor import NoiseGenerator, QPSKModulator
 import cv2
 import numpy as np
+from yolo11_detector.yolo11_detector import YOLO11Detector
 
 
 def getPSNR(I1, I2):
@@ -113,18 +114,25 @@ def main():
         print(f'Create output directory on {output_dir}')
         os.mkdir(output_dir)
 
-    #VideoParser.parse(source_video_1, output_dir)
+    VideoParser.parse(source_video_1, output_dir)
     source_video_1_frames = utils.get_video_frames(source_video_1, output_dir)
-    dbscan_detector = DBSCANDetector()
-    detected_objects_1 = dbscan_detector.detect_all(source_video_1_frames)
-    return
 
     #kmeans_detector = KMeansDetector()
     #detected_objects_1 = kmeans_detector.detect_all(source_video_1_frames)
 
-    #detector = ObjectDetector()
-    #detected_objects_1 = detector.detect_all(source_video_1_frames, target_classes)
+    #y4_detector = ObjectDetector()
+    #detected_objects_1 = y4_detector.detect_all(source_video_1_frames, target_classes, True)
     #detected_objects_1 = list([x[0] for x in detected_objects_1])
+
+    y11_detector = YOLO11Detector()
+    detected_objects_1 = y11_detector.detect_all(source_video_1_frames, target_classes, True)
+    detected_objects_1 = list([x[0] for x in detected_objects_1])
+
+    frames_with_objects = 0
+    for x in detected_objects_1:
+        if len(x) > 0:
+            frames_with_objects += 1
+    print(f'Detected {frames_with_objects} objects on first video')
 
     VideoParser.parse(source_video_2, output_dir)
     source_video_2_frames = utils.get_video_frames(source_video_2, output_dir)
@@ -135,40 +143,44 @@ def main():
         print(f'add noise to frame {frame}')
         noise_generator.add_noise(frame, False)
 
-    detected_objects_2 = dbscan_detector.detect_all(source_video_2_frames)
-    return
-
+    #detected_objects_2 = y4_detector.detect_all(source_video_2_frames, target_classes, True)
     #detected_objects_2 = kmeans_detector.detect_all(source_video_2_frames)
-    #detected_objects_2 = detector.detect_all(source_video_2_frames, target_classes)
-    #detected_objects_2 = list([x[0] for x in detected_objects_2])
+    detected_objects_2 = y11_detector.detect_all(source_video_2_frames, target_classes, True)
+    detected_objects_2 = list([x[0] for x in detected_objects_2])
+
+    frames_with_objects = 0
+    for x in detected_objects_2:
+        if len(x) > 0:
+            frames_with_objects += 1
+    print(f'Detected {len(detected_objects_2)} objects on second video')
 
     psnr_scores = []
     for frame_index in range(min(len(source_video_1_frames), len(source_video_2_frames))):
         psnr = getPSNR(cv2.imread(source_video_1_frames[frame_index]), cv2.imread(source_video_2_frames[frame_index]))
-        print(f'Local PSNR={psnr}, frame={frame_index}')
+        #print(f'Local PSNR={psnr}, frame={frame_index}')
         psnr_scores.append(psnr)
 
-    #mssim_scores = []
-    #for frame_index in range(min(len(source_video_1_frames), len(source_video_2_frames))):
-    #    mssim = getMSSISM(cv2.imread(source_video_1_frames[frame_index]), cv2.imread(source_video_2_frames[frame_index]))
-    #    print(f'Local MSSIM={mssim}, frame={frame_index}')
-    #    mssim_scores.append(mssim)
+    mssim_scores = []
+    for frame_index in range(min(len(source_video_1_frames), len(source_video_2_frames))):
+        mssim = getMSSISM(cv2.imread(source_video_1_frames[frame_index]), cv2.imread(source_video_2_frames[frame_index]))
+        print(f'Local MSSIM={mssim}, frame={frame_index}')
+        mssim_scores.append(mssim[0])
 
     f1_scores = []
     for frame_index in range(min(len(detected_objects_1), len(detected_objects_2))):
         f1 = frame_f1(detected_objects_1[frame_index], detected_objects_2[frame_index])
         if f1 is not None:
             f1_scores.append(f1)
-            print(f'Local F1={f1}, frame={frame_index}')
+            #print(f'Local F1={f1}, frame={frame_index}')
     print(f'Total F1-score: {utils.mean(f1_scores)}')
 
     total_psnr = utils.mean(psnr_scores)
     inverse_total_psnr = 1.0 if int(total_psnr) == 0 else 1 / total_psnr
     print(f'Total PSNR-score: {total_psnr}. Inverse: {inverse_total_psnr}')
 
-    #total_mssim = utils.mean(mssim_scores)
-    #inverse_total_mssim = 1.0 if int(total_mssim) == 0 else 1 / total_mssim
-    #print(f'Total MSSIM-score: {total_mssim}. Inverse: {inverse_total_mssim}')
+    total_mssim = utils.mean(mssim_scores)
+    inverse_total_mssim = 1.0 if int(total_mssim) == 0 else 1 / total_mssim
+    print(f'Total MSSIM-score: {total_mssim}. Inverse: {inverse_total_mssim}')
 
 
 
