@@ -39,7 +39,6 @@ class KMeansDetector:
                     coords.append((j, i))
         return coords
 
-
     @staticmethod
     def create_cluster_bbox(cluster_coords, frame, label) -> utils.DetectedObject:
         #cluster_coords = sorted(cluster_coords, key=lambda k: [k[0], k[1]])
@@ -55,7 +54,6 @@ class KMeansDetector:
             raise Exception('width and height can not be < 0')
 
         return utils.DetectedObject(label, [top_left[0], top_left[1], width, height], frame)
-
 
     def detect(self, img_path: str) -> (List[utils.DetectedObject], str):
         print(f'Try to detect objects on {img_path}')
