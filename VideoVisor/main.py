@@ -144,12 +144,12 @@ def ms_ssim_calculation(frames1, frames2):
     return total_ms_ssim, inverse_total_ms_ssim
 
 
-def add_noise(frames, use_modulation=False):
+def add_noise(frames, var, mean, transmitting_errors, use_modulation=False):
     print('Starting add noise')
-    noise_generator = NoiseGenerator(amount=0.01, var=0.01, mean=0.0, lam=0.01)
+    noise_generator = NoiseGenerator(amount=0.01, var=var, mean=mean, lam=0.01)
     for frame in frames:
         # print(f'add noise to frame {frame}')
-        noise_generator.add_noise(frame, use_modulation)
+        noise_generator.add_noise(frame, use_modulation, transmitting_errors)
     print('Add noise finishing')
 
 
@@ -177,10 +177,16 @@ def main():
     parser.add_argument('source_video_file')
     parser.add_argument('decompressed_video_file')
     parser.add_argument('-c', '-classes', default='car,truck,bus')
+    parser.add_argument('-var', default=0.01)
+    parser.add_argument('-mean', default=0.0)
+    parser.add_argument('-te', default=0.2)
     args = parser.parse_args()
     source_video_1 = args.source_video_file
     source_video_2 = args.decompressed_video_file
     target_classes = args.c.split(',')
+    var = args.var
+    mean = args.mean
+    transmitting_errors = args.te
 
     output_dir = os.path.abspath('../examples/output')
     if not os.path.exists(output_dir):
@@ -194,23 +200,45 @@ def main():
     # Parse transferred video
     VideoParser.parse(source_video_2, output_dir)
     source_video_2_frames = utils.get_video_frames(source_video_2, output_dir)
-    add_noise(source_video_2_frames)
+    add_noise(source_video_2_frames, var, mean, transmitting_errors)
 
     # Calculate metrics
-    total_psnr, inverse_total_psnr = psnr_calculation(source_video_1_frames, source_video_2_frames)
-    total_ms_ssim, inverse_total_ms_ssim = ms_ssim_calculation(source_video_1_frames, source_video_2_frames)
+    detectors = [ObjectDetector(), YOLO11Detector(), KMeansDetector()]
+    #detectors = [YOLO11Detector()]
+    video1_filename = os.path.basename(source_video_1)
+    video2_filename = os.path.basename(source_video_2)
+    f1_scores = []
+    for detector in detectors:
+        detector_data = os.path.join(output_dir, type(detector).__name__)
+        if os.path.exists(detector_data):
+            utils.clear_folder(detector_data)
+        else:
+            os.mkdir(detector_data)
 
-    # Create detectors
-    kmeans_detector = KMeansDetector()
-    y4_detector = ObjectDetector()
-    y11_detector = YOLO11Detector()
+        detector_video1_folder = os.path.join(detector_data, video1_filename)
+        os.mkdir(detector_video1_folder)
+        detector_video1_frames = []
+        for frame_path in source_video_1_frames:
+            detector_video1_frames.append(utils.copy_file(frame_path, detector_video1_folder))
 
-    detector = y11_detector
-    total_f1 = f1_calculation(source_video_1_frames, source_video_2_frames, detector, target_classes)
+        detector_video2_folder = os.path.join(detector_data, video2_filename)
+        os.mkdir(detector_video2_folder)
+        detector_video2_frames = []
+        for frame_path in source_video_2_frames:
+            detector_video2_frames.append(utils.copy_file(frame_path, detector_video2_folder))
+
+        detector_f1 = f1_calculation(detector_video1_frames, detector_video2_frames, detector, target_classes)
+        print(f'F1-score for {type(detector).__name__} is {detector_f1}')
+        f1_scores.append((type(detector).__name__, detector_f1))
 
     # Print metrics
-    print(f'Total F1-score: {total_f1}')
+    for f1 in f1_scores:
+        print(f'Total F1-score for {f1[0]}: {f1[1]}')
+
+    total_psnr, inverse_total_psnr = psnr_calculation(source_video_1_frames, source_video_2_frames)
     print(f'Total PSNR-score: {total_psnr}. Inverse: {inverse_total_psnr}')
+
+    total_ms_ssim, inverse_total_ms_ssim = ms_ssim_calculation(source_video_1_frames, source_video_2_frames)
     print(f'Total MSSIM-score: {total_ms_ssim}. Inverse: {inverse_total_ms_ssim}')
 
 

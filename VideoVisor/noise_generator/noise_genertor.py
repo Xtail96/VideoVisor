@@ -1,3 +1,5 @@
+import random
+
 import cv2
 import skimage
 import skimage.filters
@@ -64,8 +66,19 @@ class NoiseGenerator:
         image_noised_poisson = skimage.img_as_ubyte(image_noised_poisson)
         return image_noised_poisson.copy()
 
-    def add_noise(self, image_path: str, use_modulation=False):
-        # Наложение всех доступных типов шумов на изображение.
+    def add_transmitting_noise(self, image, transmitting_errors):
+        target_broken_pixels_count = int(image.size / 3 * transmitting_errors)
+        rows, cols = len(image), len(image[0])
+        for i in range(10): #range(target_broken_pixels_count):
+            width = 10 * random.randint(1, 10)
+            height = 10 * random.randint(1, 10)
+            x, y = random.randint(0, rows - 1 - width), random.randint(0, cols - 1 - height)
+            for ii in range(x, x + width):
+                for jj in range(y, y + height):
+                    image[ii, jj] = [0, 0, 0]
+        return image
+
+    def add_noise(self, image_path: str, use_modulation=False, transmitting_errors=0.0):
         if use_modulation:
             self.modulator.transmit_image(image_path)
 
@@ -74,4 +87,7 @@ class NoiseGenerator:
         #image = self.add_multiplicative_noise(image)
         image = self.add_gaussian_noise(image)
         #image = self.add_quantization_noise(image)
+
+        if transmitting_errors > 0:
+            image = self.add_transmitting_noise(image, transmitting_errors)
         cv2.imwrite(image_path, image)

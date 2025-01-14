@@ -40,6 +40,12 @@ class KMeansDetector:
         return coords
 
     @staticmethod
+    def get_cluster_center(coords):
+        a = np.array(coords)
+        mean = np.mean(a, axis=0)
+        return mean[0], mean[1]
+
+    @staticmethod
     def create_cluster_bbox(cluster_coords, frame, label) -> utils.DetectedObject:
         #cluster_coords = sorted(cluster_coords, key=lambda k: [k[0], k[1]])
         cluster_x = [k[0] for k in cluster_coords]
@@ -50,10 +56,17 @@ class KMeansDetector:
         width = right_bottom[0] - top_left[0]
         height = right_bottom[1] - top_left[1]
 
+        # Вычисление центра масс кластера и создание окрестности
+        centroid_x, centroid_y = KMeansDetector.get_cluster_center(cluster_coords)
+        bbox_top_left_x = int(centroid_x - width / 10)
+        bbox_top_left_y = int(centroid_y - height / 10)
+        bbox_width = int(width / 10)
+        bbox_height = int(height / 10)
+
         if width < 0 or height < 0:
             raise Exception('width and height can not be < 0')
 
-        return utils.DetectedObject(label, [top_left[0], top_left[1], width, height], frame)
+        return utils.DetectedObject(label, [bbox_top_left_x, bbox_top_left_y, bbox_width, bbox_height], frame)
 
     def detect(self, img_path: str) -> (List[utils.DetectedObject], str):
         print(f'Try to detect objects on {img_path}')
@@ -91,7 +104,6 @@ class KMeansDetector:
         # print(f'{list(detected_object.to_string() for detected_object in detected_objects)} detected')
         return detected_objects, img_path
 
-    def detect_all(self, images: List[str]) -> List[utils.DetectedObject]:
-        return (list(self.detect(img) for img in images[42:80]) +
-                list(self.detect(img) for img in images[138:170]))
-        #return list(self.detect(img) for img in images)
+    def detect_all(self, images: List[str], target_classes: List[str], silent: bool) -> List[utils.DetectedObject]:
+        #return (list(self.detect(img) for img in images[42:80]) + list(self.detect(img) for img in images[138:170]))
+        return list(self.detect(img) for img in images)

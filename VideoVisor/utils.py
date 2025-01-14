@@ -131,3 +131,11 @@ def clear_folder(folder: str):
 
 def mean(numbers):
     return float(sum(numbers)) / max(len(numbers), 1)
+
+
+def copy_file(src, dst):
+    return shutil.copy(src, dst)
+
+
+def create_folder(dst):
+    os.mkdir(dst)
