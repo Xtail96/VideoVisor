@@ -68,7 +68,7 @@ class KMeansDetector:
 
         return utils.DetectedObject(label, [bbox_top_left_x, bbox_top_left_y, bbox_width, bbox_height], frame)
 
-    def detect(self, img_path: str) -> (List[utils.DetectedObject], str):
+    def detect(self, img_path: str, debug=False) -> (List[utils.DetectedObject], str):
         print(f'Try to detect objects on {img_path}')
 
         """Read the image and convert it to RGB."""
@@ -88,9 +88,10 @@ class KMeansDetector:
         pixel_values, labels, centers = compactness, labels, np.uint8(centers)
 
         segmented_image = self.create_segmented_image(source_image, labels, centers)
-        cv2.imwrite(f'{img_path}_kmeans.jpg', segmented_image)
-        segmented_image_rgb = self.create_segmented_image_rgb(source_image, labels)
-        cv2.imwrite(f'{img_path}_kmeans_rgb.jpg', segmented_image_rgb)
+        if debug:
+            cv2.imwrite(f'{img_path}_kmeans.jpg', segmented_image)
+            segmented_image_rgb = self.create_segmented_image_rgb(source_image, labels)
+            cv2.imwrite(f'{img_path}_kmeans_rgb.jpg', segmented_image_rgb)
 
         frame_number = int(os.path.basename(img_path).split('.')[0])
         detected_objects = []
@@ -106,4 +107,4 @@ class KMeansDetector:
 
     def detect_all(self, images: List[str], target_classes: List[str], silent: bool) -> List[utils.DetectedObject]:
         #return (list(self.detect(img) for img in images[42:80]) + list(self.detect(img) for img in images[138:170]))
-        return list(self.detect(img) for img in images)
+        return list(self.detect(img) for img in images[::25])

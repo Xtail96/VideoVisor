@@ -5,6 +5,8 @@ import utils
 from object_detector.object_detector import ObjectDetector
 from cluster_detector.kmeans_detector import KMeansDetector
 from cluster_detector.dbscan_detector import DBSCANDetector
+from cluster_detector.slic_detector import SLICDetector
+from cluster_detector.cnn_detector import CNNBasedDetector
 from typing import List
 from noise_generator.noise_genertor import NoiseGenerator, QPSKModulator
 import cv2
@@ -177,16 +179,16 @@ def main():
     parser.add_argument('source_video_file')
     parser.add_argument('decompressed_video_file')
     parser.add_argument('-c', '-classes', default='car,truck,bus')
-    parser.add_argument('-var', default=0.01)
+    parser.add_argument('-var', default=0.003)
     parser.add_argument('-mean', default=0.0)
-    parser.add_argument('-te', default=0.2)
+    parser.add_argument('-te', default=10)
     args = parser.parse_args()
     source_video_1 = args.source_video_file
     source_video_2 = args.decompressed_video_file
     target_classes = args.c.split(',')
     var = args.var
     mean = args.mean
-    transmitting_errors = args.te
+    transmitting_errors_count = args.te
 
     output_dir = os.path.abspath('../examples/output')
     if not os.path.exists(output_dir):
@@ -200,10 +202,10 @@ def main():
     # Parse transferred video
     VideoParser.parse(source_video_2, output_dir)
     source_video_2_frames = utils.get_video_frames(source_video_2, output_dir)
-    add_noise(source_video_2_frames, var, mean, transmitting_errors)
+    add_noise(source_video_2_frames, var, mean, transmitting_errors_count)
 
     # Calculate metrics
-    detectors = [ObjectDetector(), YOLO11Detector(), KMeansDetector()]
+    detectors = [ObjectDetector(), YOLO11Detector(), KMeansDetector(), SLICDetector()] #, CNNBasedDetector()]
     #detectors = [YOLO11Detector()]
     video1_filename = os.path.basename(source_video_1)
     video2_filename = os.path.basename(source_video_2)
@@ -236,10 +238,10 @@ def main():
         print(f'Total F1-score for {f1[0]}: {f1[1]}')
 
     total_psnr, inverse_total_psnr = psnr_calculation(source_video_1_frames, source_video_2_frames)
-    print(f'Total PSNR-score: {total_psnr}. Inverse: {inverse_total_psnr}')
+    print(f'Total PSNR score: {total_psnr}. Inverse: {inverse_total_psnr}')
 
     total_ms_ssim, inverse_total_ms_ssim = ms_ssim_calculation(source_video_1_frames, source_video_2_frames)
-    print(f'Total MSSIM-score: {total_ms_ssim}. Inverse: {inverse_total_ms_ssim}')
+    print(f'Total MS-SSIM score: {total_ms_ssim}. Inverse: {inverse_total_ms_ssim}')
 
 
 if __name__ == '__main__':

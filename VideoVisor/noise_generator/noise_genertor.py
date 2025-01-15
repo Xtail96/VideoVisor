@@ -66,10 +66,9 @@ class NoiseGenerator:
         image_noised_poisson = skimage.img_as_ubyte(image_noised_poisson)
         return image_noised_poisson.copy()
 
-    def add_transmitting_noise(self, image, transmitting_errors):
-        target_broken_pixels_count = int(image.size / 3 * transmitting_errors)
+    def add_transmitting_noise(self, image, broken_areas_count):
         rows, cols = len(image), len(image[0])
-        for i in range(10): #range(target_broken_pixels_count):
+        for i in range(broken_areas_count):
             width = 10 * random.randint(1, 10)
             height = 10 * random.randint(1, 10)
             x, y = random.randint(0, rows - 1 - width), random.randint(0, cols - 1 - height)
@@ -78,7 +77,7 @@ class NoiseGenerator:
                     image[ii, jj] = [0, 0, 0]
         return image
 
-    def add_noise(self, image_path: str, use_modulation=False, transmitting_errors=0.0):
+    def add_noise(self, image_path: str, use_modulation=False, broken_areas_count=0):
         if use_modulation:
             self.modulator.transmit_image(image_path)
 
@@ -88,6 +87,6 @@ class NoiseGenerator:
         image = self.add_gaussian_noise(image)
         #image = self.add_quantization_noise(image)
 
-        if transmitting_errors > 0:
-            image = self.add_transmitting_noise(image, transmitting_errors)
+        if broken_areas_count > 0:
+            image = self.add_transmitting_noise(image, broken_areas_count)
         cv2.imwrite(image_path, image)
