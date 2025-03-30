@@ -4,6 +4,40 @@ import cv2
 from typing import List
 
 
+class Point2D:
+    def __init__(self, x: int, y: int):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def __repr__(self):
+        return f'({self.x}, {self.y})'
+
+    def __str__(self):
+        return f'({self.x}, {self.y})'
+
+    def __hash__(self):
+        return hash(f'{self.x}{self.y}')
+
+
+class Cluster2D:
+    def __init__(self, points: List[Point2D]):
+        self.points = points
+
+    def intersection(self, other):
+        intersection = [p for p in other.points if p in self.points]
+        return len(intersection), intersection
+
+    def union(self, other):
+        joined = self.points + other.points
+        print(joined)
+        set(joined)
+        union = list(set(joined))
+        return len(union), union
+
+
 class BoundingBox:
     def __init__(self, x: float, y: float, w: float, h: float, frame: int):
         self.x = x
