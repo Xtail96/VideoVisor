@@ -73,7 +73,7 @@ def getMSSISM(i1, i2):
     return mssim
 
 
-def frame_f1(frame1: List[utils.DetectedObject], frame2: List[utils.DetectedObject]):
+def frame_f1(frame1: list, frame2: list):
     if len(frame1) == 0 and len(frame2) == 0:
         return None
 
@@ -169,8 +169,8 @@ def f1_calculation(frames1, frames2, detector, target_classes=''):
             f1_scores.append(f1)
             # print(f'Local F1={f1}, frame={frame_index}')
     print('F1 calculation finished')
-    print(f'Detected {frame_with_objects_count(detected_objects_1)} objects on first video')
-    print(f'Detected {frame_with_objects_count(detected_objects_2)} objects on second video')
+    print(f'Objects detected on {frame_with_objects_count(detected_objects_1)} of first video frames')
+    print(f'Objects detected on {frame_with_objects_count(detected_objects_2)} of second video frames')
     return utils.mean(f1_scores)
 
 
@@ -205,8 +205,8 @@ def main():
     add_noise(source_video_2_frames, var, mean, transmitting_errors_count)
 
     # Calculate metrics
-    detectors = [ObjectDetector(), YOLO11Detector(), KMeansDetector(), SLICDetector()] #, CNNBasedDetector()]
-    #detectors = [YOLO11Detector()]
+    #detectors = [ObjectDetector(), YOLO11Detector(), KMeansDetector(), SLICDetector()] #, CNNBasedDetector()]
+    detectors = [YOLO11Detector(), KMeansDetector()]
     video1_filename = os.path.basename(source_video_1)
     video2_filename = os.path.basename(source_video_2)
     f1_scores = []

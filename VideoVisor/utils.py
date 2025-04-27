@@ -21,21 +21,34 @@ class Point2D:
     def __hash__(self):
         return hash(f'{self.x}{self.y}')
 
+    def draw_on_image(self, image, color=(0, 0, 255)):
+        return cv2.circle(image, (self.x, self.y), radius=0, color=color, thickness=-1)
+
 
 class Cluster2D:
-    def __init__(self, points: List[Point2D]):
+    def __init__(self, points: List[Point2D], label: str):
         self.points = points
+        self.label = label
 
     def intersection(self, other):
-        intersection = [p for p in other.points if p in self.points]
+        intersection = list(set(self.points) & set(other.points))
         return len(intersection), intersection
 
     def union(self, other):
         joined = self.points + other.points
-        print(joined)
-        set(joined)
         union = list(set(joined))
         return len(union), union
+
+    def draw(self, image_path, color=(0, 0, 255)):
+        color = (int(color[0]), int(color[1]), int(color[2]))
+
+        image = cv2.imread(image_path)
+        for point in self.points:
+            image = point.draw_on_image(image, color)
+        cv2.imwrite(image_path, image)
+
+    def intersects_with(self, other, iou_treshold=0.75):
+        return self.intersection(other)[0] / self.union(other)[0] >= iou_treshold
 
 
 class BoundingBox:

@@ -4,6 +4,7 @@ import numpy as np
 from typing import List
 import utils
 import colorsys
+from tqdm import tqdm
 
 
 class KMeansDetector:
@@ -15,62 +16,29 @@ class KMeansDetector:
         segmented_image = centers[labels.flatten()]
         return segmented_image.reshape(image.shape)
 
-    def create_masked_image(self, image, labels, cluster_to_disable):
-        """Create a masked image by disabling a specific cluster."""
-        masked_image = np.copy(image).reshape((-1, 3))
-        masked_image[labels.flatten() == cluster_to_disable] = [0, 0, 0]
-        return masked_image.reshape(image.shape)
-
-    def create_segmented_image_rgb(self, image, labels):
-        """Create a masked image by disabling a specific cluster."""
-        masked_image = np.copy(image).reshape((-1, 3))
-        masked_image[labels.flatten() == 0] = [128, 0, 0]
-        masked_image[labels.flatten() == 1] = [0, 128, 0]
-        masked_image[labels.flatten() == 2] = [0, 0, 128]
-        return masked_image.reshape(image.shape)
+    @staticmethod
+    def get_cluster_coords_alt(segmented_image, r, g, b) -> List[utils.Point2D]:
+        coords = [[utils.Point2D(x, y) for x in range(len(segmented_image[y]))
+                   if segmented_image[y, x, 0] == b and segmented_image[y, x, 1] == g and segmented_image[y, x, 2] == r]
+                  for y in range(len(segmented_image))]
+        coords = [x for row in coords for x in row]
+        return coords
 
     @staticmethod
-    def get_cluster_coords(segmented_image, r, g, b):
+    def get_cluster_coords(segmented_image, r, g, b) -> List[utils.Point2D]:
         coords = []
         x, y, z = segmented_image.shape
         for i in range(x):
             for j in range(y):
                 if segmented_image[i, j, 0] == b and segmented_image[i, j, 1] == g and segmented_image[i, j, 2] == r:
-                    coords.append((j, i))
+                    coords.append(utils.Point2D(j, i))
         return coords
 
     @staticmethod
-    def get_cluster_center(coords):
-        a = np.array(coords)
-        mean = np.mean(a, axis=0)
-        return mean[0], mean[1]
-
-    @staticmethod
-    def create_cluster_bbox(cluster_coords, frame, label) -> utils.DetectedObject:
-        #cluster_coords = sorted(cluster_coords, key=lambda k: [k[0], k[1]])
-        cluster_x = [k[0] for k in cluster_coords]
-        cluster_y = [k[1] for k in cluster_coords]
-
-        top_left = (min(cluster_x), min(cluster_y))
-        right_bottom = (max(cluster_x), max(cluster_y))
-        width = right_bottom[0] - top_left[0]
-        height = right_bottom[1] - top_left[1]
-
-        # Вычисление центра масс кластера и создание окрестности
-        centroid_x, centroid_y = KMeansDetector.get_cluster_center(cluster_coords)
-        bbox_top_left_x = int(centroid_x - width / 10)
-        bbox_top_left_y = int(centroid_y - height / 10)
-        bbox_width = int(width / 10)
-        bbox_height = int(height / 10)
-
-        if width < 0 or height < 0:
-            raise Exception('width and height can not be < 0')
-
-        return utils.DetectedObject(label, [bbox_top_left_x, bbox_top_left_y, bbox_width, bbox_height], frame)
+    def create_cluster(coords, frame, label) -> utils.Cluster2D:
+        return utils.Cluster2D(coords, label)
 
     def detect(self, img_path: str, debug=False) -> (List[utils.DetectedObject], str):
-        print(f'Try to detect objects on {img_path}')
-
         """Read the image and convert it to RGB."""
         source_image = cv2.imread(img_path)
         height, width, _ = source_image.shape
@@ -88,23 +56,24 @@ class KMeansDetector:
         pixel_values, labels, centers = compactness, labels, np.uint8(centers)
 
         segmented_image = self.create_segmented_image(source_image, labels, centers)
-        if debug:
-            cv2.imwrite(f'{img_path}_kmeans.jpg', segmented_image)
-            segmented_image_rgb = self.create_segmented_image_rgb(source_image, labels)
-            cv2.imwrite(f'{img_path}_kmeans_rgb.jpg', segmented_image_rgb)
-
         frame_number = int(os.path.basename(img_path).split('.')[0])
-        detected_objects = []
+        detected_clusters = []
         i = 0
         for center in centers:
-            coords = self.get_cluster_coords(segmented_image, center[2], center[1], center[0])
-            detected_objects.append(self.create_cluster_bbox(coords, frame_number, f'{i}'))
+            coords = self.get_cluster_coords_alt(segmented_image, center[2], center[1], center[0])
+            detected_clusters.append(
+                {
+                    'cluster': self.create_cluster(coords, frame_number, f'{i}'),
+                    'color': (center[2], center[1], center[0])
+                }
+            )
             i = i + 1
 
-        utils.draw_objects_on_image(detected_objects, img_path)
-        # print(f'{list(detected_object.to_string() for detected_object in detected_objects)} detected')
-        return detected_objects, img_path
+        if debug:
+            for cluster in detected_clusters:
+                cluster['cluster'].draw(img_path, cluster['color'])
+        return list([x['cluster'] for x in detected_clusters]), img_path
 
     def detect_all(self, images: List[str], target_classes: List[str], silent: bool) -> List[utils.DetectedObject]:
         #return (list(self.detect(img) for img in images[42:80]) + list(self.detect(img) for img in images[138:170]))
-        return list(self.detect(img) for img in images[::25])
+        return list(self.detect(img, not silent) for img in tqdm(images[::100], f'{type(self).__name__}'))

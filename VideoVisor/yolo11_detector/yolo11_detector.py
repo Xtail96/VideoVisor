@@ -4,6 +4,7 @@ import numpy as np
 from typing import List
 import utils
 from ultralytics import YOLO
+from tqdm import tqdm
 
 
 class YOLO11Detector:
@@ -49,4 +50,4 @@ class YOLO11Detector:
 
     def detect_all(self, images: List[str], target_classes: List[str], silent: bool) -> List[utils.DetectedObject]:
         #return list(self.detect(img, target_classes, silent) for img in images[75:80])
-        return list(self.detect(img, target_classes, silent) for img in images)
+        return list(self.detect(img, target_classes, silent) for img in tqdm(images, f'{type(self).__name__}'))
