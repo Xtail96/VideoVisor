@@ -50,4 +50,4 @@ class YOLO11Detector:
 
     def detect_all(self, images: List[str], target_classes: List[str], silent: bool) -> List[utils.DetectedObject]:
         #return list(self.detect(img, target_classes, silent) for img in images[75:80])
-        return list(self.detect(img, target_classes, silent) for img in tqdm(images, f'{type(self).__name__}'))
+        return list(self.detect(img, target_classes, silent) for img in tqdm(images[::25], f'{type(self).__name__}'))

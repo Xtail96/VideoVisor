@@ -120,7 +120,7 @@ def frame_with_objects_count(detected_objects):
 def psnr_calculation(frames_1, frames_2):
     print('Starting PSNR calculation')
     psnr_scores = []
-    for frame_index in range(min(len(frames_1), len(frames_2))):
+    for frame_index in range(min(len(frames_1), len(frames_2)))[::25]:
         psnr = getPSNR(cv2.imread(frames_1[frame_index]), cv2.imread(frames_2[frame_index]))
         # print(f'Local PSNR={psnr}, frame={frame_index}')
         psnr_scores.append(psnr)
@@ -134,7 +134,7 @@ def ms_ssim_calculation(frames1, frames2):
     print('Starting MS-SSIM calculation')
     calculator = MS_SSIM_Calculator()
     ms_ssim_scores = []
-    for frame_index in range(min(len(frames1), len(frames2))):
+    for frame_index in range(min(len(frames1), len(frames2)))[::25]:
         ms_ssim = calculator.calculate_ms_ssim(frames1[frame_index], frames2[frame_index])
         #ms_ssim = getMSSISM(cv2.imread(frames1[frame_index]), cv2.imread(frames2[frame_index]))
         #ms_ssim = ms_ssim[0]
@@ -149,7 +149,7 @@ def ms_ssim_calculation(frames1, frames2):
 def add_noise(frames, var, mean, transmitting_errors, use_modulation=False):
     print('Starting add noise')
     noise_generator = NoiseGenerator(amount=0.01, var=var, mean=mean, lam=0.01)
-    for frame in frames:
+    for frame in frames[::25]:
         # print(f'add noise to frame {frame}')
         noise_generator.add_noise(frame, use_modulation, transmitting_errors)
     print('Add noise finishing')
@@ -179,7 +179,7 @@ def main():
     parser.add_argument('source_video_file')
     parser.add_argument('decompressed_video_file')
     parser.add_argument('-c', '-classes', default='car,truck,bus')
-    parser.add_argument('-var', default=0.003)
+    parser.add_argument('-var', default=0.0)
     parser.add_argument('-mean', default=0.0)
     parser.add_argument('-te', default=10)
     args = parser.parse_args()
@@ -206,7 +206,8 @@ def main():
 
     # Calculate metrics
     #detectors = [ObjectDetector(), YOLO11Detector(), KMeansDetector(), SLICDetector()] #, CNNBasedDetector()]
-    detectors = [YOLO11Detector(), KMeansDetector()]
+    detectors = [SLICDetector(), CNNBasedDetector(), YOLO11Detector(), KMeansDetector()]
+    #detectors = []
     video1_filename = os.path.basename(source_video_1)
     video2_filename = os.path.basename(source_video_2)
     f1_scores = []

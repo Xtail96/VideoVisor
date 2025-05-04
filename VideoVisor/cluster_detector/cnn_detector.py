@@ -12,6 +12,7 @@ import sys
 import numpy as np
 import torch.nn.init
 import random
+from tqdm import tqdm
 
 
 nChannel = 100
@@ -68,8 +69,12 @@ class CNNBasedDetector:
         for i in range(x):
             for j in range(y):
                 if segmented_image[i, j] == class_index:
-                    coords.append((j, i))
+                    coords.append(utils.Point2D(j, i))
         return coords
+
+    @staticmethod
+    def create_cluster(coords, frame, label) -> utils.Cluster2D:
+        return utils.Cluster2D(coords, label)
 
     @staticmethod
     def get_cluster_center(coords):
@@ -101,8 +106,6 @@ class CNNBasedDetector:
         return utils.DetectedObject(label, [bbox_top_left_x, bbox_top_left_y, bbox_width, bbox_height], frame)
 
     def detect(self, img_path: str, debug=False) -> (List[utils.DetectedObject], str):
-        print(f'Try to detect objects on {img_path}')
-
         # load image
         im = cv2.imread(img_path)
         data = torch.from_numpy(np.array([im.transpose((2, 0, 1)).astype('float32') / 255.]))
@@ -193,17 +196,19 @@ class CNNBasedDetector:
         im_target_rgb = im_target_rgb.reshape(im.shape).astype(np.uint8)
         cv2.imwrite(f'{img_path}_cnn.png', im_target_rgb)
 
-        detected_objects = []
+        detected_clusters = []
         classes_count = im_target.max() - 1
         frame_number = int(os.path.basename(img_path).split('.')[0])
         for i in range(classes_count):
             img = im_target.reshape((im.shape[0], im.shape[1]))
             coords = self.get_cluster_coords(img, i + 1)
             if len(coords) > 0:
-                detected_objects.append(self.create_cluster_bbox(coords, frame_number, f'{i + 1}'))
+                detected_clusters.append(self.create_cluster(coords, frame_number, f'{i + 1}'))
 
-        utils.draw_objects_on_image(detected_objects, img_path)
-        return detected_objects, img_path
+        if debug:
+            for cluster in detected_clusters:
+                cluster.draw(img_path, list(np.random.choice(range(256), size=3)))
+        return detected_clusters, img_path
 
     def detect_all(self, images: List[str], target_classes: List[str], silent: bool) -> List[utils.DetectedObject]:
-        return list(self.detect(img, True) for img in images[::25])
+        return list(self.detect(img, True) for img in tqdm(images[::25], f'{type(self).__name__}'))

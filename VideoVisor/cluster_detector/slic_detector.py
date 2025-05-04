@@ -8,6 +8,7 @@ from skimage.segmentation import mark_boundaries
 from skimage.util import img_as_float
 from skimage import io
 import matplotlib.pyplot as plte
+from tqdm import tqdm
 
 class SLICDetector:
     def __init__(self):
@@ -23,8 +24,12 @@ class SLICDetector:
         for i in range(x):
             for j in range(y):
                 if segmented_image[i, j] == class_index:
-                    coords.append((j, i))
+                    coords.append(utils.Point2D(j, i))
         return coords
+
+    @staticmethod
+    def create_cluster(coords, frame, label) -> utils.Cluster2D:
+        return utils.Cluster2D(coords, label)
 
     @staticmethod
     def get_cluster_center(coords):
@@ -56,26 +61,25 @@ class SLICDetector:
         return utils.DetectedObject(label, [bbox_top_left_x, bbox_top_left_y, bbox_width, bbox_height], frame)
 
     def detect(self, img_path: str, debug=False) -> (List[utils.DetectedObject], str):
-        print(f'Try to detect objects on {img_path}')
         image = img_as_float(io.imread(img_path))
         segmented_image = slic(image, n_segments=100)
         frame_number = int(os.path.basename(img_path).split('.')[0])
-        detected_objects = []
+        detected_clusters = []
 
         classes_count = segmented_image.max() - 1
         classes_coords = []
         for i in range(classes_count):
             coords = self.get_cluster_coords(segmented_image, i + 1)
-            detected_objects.append(self.create_cluster_bbox(coords, frame_number, f'{i + 1}'))
+            detected_clusters.append(self.create_cluster(coords, frame_number, f'{i + 1}'))
             classes_coords.append(coords)
 
-        utils.draw_objects_on_image(detected_objects, img_path)
-
         if debug:
+            for cluster in detected_clusters:
+                cluster.draw(img_path, list(np.random.choice(range(256), size=3)))
             float_img = mark_boundaries(image, segmented_image)
             int_img = float_img * 1000
             cv2.imwrite(f'{img_path}_slic.jpg', int_img)
-        return detected_objects, img_path
+        return detected_clusters, img_path
 
     def detect_all(self, images: List[str], target_classes: List[str], silent: bool) -> List[utils.DetectedObject]:
-        return list(self.detect(img, True) for img in images[::25])
+        return list(self.detect(img, True) for img in tqdm(images[::25], f'{type(self).__name__}'))
